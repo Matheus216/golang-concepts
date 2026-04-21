@@ -2,6 +2,7 @@ package greetings
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -9,6 +10,7 @@ import (
 func TestHelloMessageSuccess(t *testing.T) {
 	nameToTest := "Fernandinho"
 	response, error := Hello(nameToTest)
+	want := regexp.MustCompile(`\b` + nameToTest + `\b`)
 
 	if error != nil {
 		t.Errorf("Invalid test case, this error happens: %v", error.Error())
@@ -16,7 +18,8 @@ func TestHelloMessageSuccess(t *testing.T) {
 
 	if !strings.Contains(response, "Welcome") &&
 		!strings.Contains(response, "Greate") &&
-		!strings.Contains(response, "Hail") {
+		!strings.Contains(response, "Hail") &&
+		!want.MatchString(response) {
 		t.Errorf("Don't have Welcome, in this result: %v", response)
 	}
 }
