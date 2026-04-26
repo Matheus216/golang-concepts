@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -12,21 +13,19 @@ type Page struct {
 	Body  []byte
 }
 
-func main() {
-	http.HandleFunc("/", handleHome)
-	http.HandleFunc("/view/", handleView)
-	http.HandleFunc("/edit/", handleEdit)
-	http.HandleFunc("/save/", handleSave)
-	log.Fatal(http.ListenAndServe(":9999", nil))
-}
-
 func handleView(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/view/"):]
 	fmt.Printf("parameter: %s", title)
 
-	p, _ := loadPage(title)
+	p, err := loadPage(title)
 
-	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	t, _ := template.ParseFiles("view.html")
+
+	t.Execute(w, p)
 }
 
 func handleEdit(w http.ResponseWriter, r *http.Request) {
@@ -34,12 +33,9 @@ func handleEdit(w http.ResponseWriter, r *http.Request) {
 
 	p, _ := loadPage(title)
 
-	fmt.Fprintf(w, "<h1>Editing %s</h1>"+
-		"<form action=\"/save/%s\" method=\"POST\">"+
-		"<textarea name=\"body\">%s</textarea><br>"+
-		"<input type=\"submit\" value=\"Save\">"+
-		"</form>",
-		p.Title, p.Title, p.Body)
+	t, _ := template.ParseFiles("edit.html")
+
+	t.Execute(w, p)
 }
 
 func handleSave(w http.ResponseWriter, r *http.Request) {
@@ -47,11 +43,9 @@ func handleSave(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		title := r.URL.Path[len("/save/"):]
 
-		fmt.Fprintf(w, "<h1>Creating</h1>"+
-			"<form action=\"/save/%s\" method=\"POST\">"+
-			"<textarea name=\"body\"></textarea><br>"+
-			"<input type=\"submit\" value=\"Save\">"+
-			"</form>", title)
+		t, _ := template.ParseFiles("edit.html")
+
+		t.Execute(w, Page{Title: title})
 	}
 	if r.Method == http.MethodPost {
 		handleSavePost(w, r)
@@ -91,4 +85,12 @@ func loadPage(title string) (*Page, error) {
 	}
 
 	return &Page{Title: title, Body: body}, nil
+}
+
+func main() {
+	http.HandleFunc("/", handleHome)
+	http.HandleFunc("/view/", handleView)
+	http.HandleFunc("/edit/", handleEdit)
+	http.HandleFunc("/save/", handleSave)
+	log.Fatal(http.ListenAndServe(":9999", nil))
 }
