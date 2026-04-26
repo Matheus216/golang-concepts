@@ -1,0 +1,10 @@
+<div>
+    <h1>Golang wiki</h1>
+    <ul>
+        {{range .Items}}
+        <li><a href="/edit/{{.}}">{{.}}</a></li>
+        {{else}}
+        <li><p>No pages found</p></li>
+        {{end}}
+    </ul>
+</div>
